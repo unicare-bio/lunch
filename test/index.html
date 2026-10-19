@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>詠不餓｜點一下，詠遠吃得飽</title>
+<meta name="theme-color" content="#1E7A45">
+<meta name="apple-mobile-web-app-title" content="詠不餓">
+<link rel="apple-touch-icon" href="../icon.png">
+<link rel="icon" href="../icon.png">
+<style>
+:root{
+  --paper:#EEF3F0; --card:#FFFFFF; --ink:#1B2925; --muted:#56665F; --line:#D2DCD7;
+  --meat:#B23B25; --meat-soft:#FBE9E3; --veg:#286B42; --veg-soft:#E2F1E7;
+  --ticket:#FFF3C9; --ticket-edge:#C99412; --danger:#A8231B; --go:#1E7A45; --focus:#1F5FD1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",sans-serif;
+  font-size:19px;line-height:1.5;-webkit-text-size-adjust:100%}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.app{max-width:540px;margin:0 auto;min-height:100vh;padding:0 0 100px}
+.num{font-variant-numeric:tabular-nums}
+
+.top{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px 6px}
+.top .hi{font-size:16px;color:var(--muted)}
+.top h1{margin:0;font-size:28px;line-height:1.25;font-weight:900}
+.top .out{border:0;background:none;color:var(--muted);text-decoration:underline;font-size:15px;padding:6px 0}
+
+.dates{display:flex;gap:8px;overflow-x:auto;padding:8px 18px 14px;scrollbar-width:none}
+.dates::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;min-width:78px;padding:8px 10px;border:2px solid var(--line);border-radius:14px;background:var(--card);text-align:center;line-height:1.25}
+.chip .d{display:block;font-size:20px;font-weight:800}
+.chip .s{display:block;font-size:14px;color:var(--muted)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip.on .s{color:#cfd9d4}
+.chip .done{color:var(--veg);font-weight:800}
+.chip.on .done{color:#9fe0b6}
+
+.wrap{padding:0 18px}
+.ask{font-size:24px;font-weight:900;margin:2px 0 4px}
+.hint{font-size:16px;color:var(--muted);margin:0 0 14px}
+.hint b{color:var(--ink)}
+
+.cats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cat{border:3px solid var(--line);background:var(--card);border-radius:18px;padding:14px 12px;text-align:left;min-height:84px}
+.cat .n{display:block;font-size:28px;font-weight:900;line-height:1.15}
+.cat .v{display:block;font-size:15px;color:var(--muted)}
+.cat.meat.on{border-color:var(--meat);background:var(--meat-soft)} .cat.meat.on .n{color:var(--meat)}
+.cat.veg.on{border-color:var(--veg);background:var(--veg-soft)} .cat.veg.on .n{color:var(--veg)}
+.cat:disabled{opacity:.4}
+
+.items{background:var(--card);border-radius:18px;overflow:hidden;border:1px solid var(--line)}
+.item{display:flex;width:100%;align-items:center;gap:14px;min-height:74px;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left}
+.item:last-child{border-bottom:0}
+.item:active{background:#F1F5F3}
+.code{flex:0 0 auto;min-width:50px;height:50px;padding:0 6px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:21px;font-weight:900;color:#fff;background:var(--meat)}
+.veg .code,.code.veg{background:var(--veg)}
+.code.none{background:#C9D3CE}
+.item .nm{flex:1;font-size:21px;font-weight:800;line-height:1.3}
+.item .nm small{display:block;font-size:14px;font-weight:400;color:var(--muted)}
+.item .pr{font-size:23px;font-weight:900;white-space:nowrap}
+
+.ticket{position:relative;background:var(--ticket);border-radius:20px;padding:20px 20px 16px;border:2px solid var(--ticket-edge);margin-bottom:14px}
+.ticket .when{font-size:17px;color:#6B5A1E;font-weight:800}
+.tl{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px dashed var(--ticket-edge)}
+.tl:last-of-type{border-bottom:0}
+.tl .nm{flex:1;font-size:22px;font-weight:900;line-height:1.3}
+.tl .nm small{display:block;font-size:15px;font-weight:700;color:#6B5A1E}
+.tl .pr{font-size:21px;font-weight:900}
+.tl .x{border:2px solid #C9B27A;background:#fff;border-radius:12px;width:48px;height:48px;font-size:22px;color:var(--danger);font-weight:900}
+.half{display:inline-block;background:var(--ink);color:#fff;font-size:14px;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:3px}
+.sum{display:flex;justify-content:space-between;border-top:2px solid var(--ticket-edge);margin-top:4px;padding-top:12px;font-size:20px;font-weight:900}
+.foot{font-size:16px;color:#5A4B14;margin-top:8px}
+.stamp{position:absolute;right:14px;top:-14px;width:84px;height:84px;border-radius:50%;border:4px solid var(--veg);color:var(--veg);
+  display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;transform:rotate(-12deg);background:rgba(255,255,255,.85)}
+.stamp.closed{border-color:#7C7466;color:#7C7466}
+.stamp.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes pop{from{transform:rotate(-12deg) scale(2.2);opacity:0}to{transform:rotate(-12deg) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.stamp.pop{animation:none}}
+
+.btn{display:block;width:100%;min-height:62px;border-radius:16px;border:2px solid var(--ink);background:var(--card);font-size:21px;font-weight:800;padding:10px}
+.btn+.btn{margin-top:10px}
+.btn.go{background:var(--go);border-color:var(--go);color:#fff;font-size:24px;min-height:70px}
+.btn.ghost{border-color:var(--line)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.link{display:block;margin:18px auto 0;border:0;background:none;color:var(--danger);text-decoration:underline;font-size:17px;padding:8px}
+
+.note{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;font-size:18px}
+.note h2{margin:0 0 6px;font-size:22px}
+
+.login{padding:26px 18px}
+.login h1{font-size:30px;margin:0 0 4px}
+.login p{color:var(--muted);margin:0 0 16px}
+.people{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.person{min-height:64px;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:6px;font-size:20px;font-weight:800;line-height:1.2}
+.person:active{border-color:var(--ink)}
+.search{width:100%;height:54px;font-size:20px;border:2px solid var(--line);border-radius:14px;padding:0 14px;margin-bottom:12px;background:#fff}
+.err{color:var(--danger);font-weight:800;white-space:pre-line;margin:6px 0}
+.err:empty{display:none}
+
+.bal{background:var(--card);border-radius:18px;border:1px solid var(--line);padding:20px;margin-bottom:12px}
+.bal .k{font-size:17px;color:var(--muted)}
+.bal .v{font-size:46px;font-weight:900;line-height:1.15}
+.bal.owe .v{color:var(--danger)} .bal.pre .v{color:var(--veg)}
+.bal .sub{font-size:15px;color:var(--muted);margin-top:6px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stats div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.stats span{display:block;font-size:15px;color:var(--muted)}
+.stats b{font-size:24px}
+.hist{background:var(--card);border-radius:16px;border:1px solid var(--line)}
+.hist .h{display:flex;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.hist .h:last-child{border-bottom:0}
+.hist .t{font-weight:800}
+.hist .s{font-size:14px;color:var(--muted)}
+.hist .a{font-weight:900;white-space:nowrap}
+.hist .a.plus{color:var(--veg)}
+.sec{font-size:18px;font-weight:900;margin:6px 0 8px}
+
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;padding-bottom:env(safe-area-inset-bottom)}
+.nav button{border:0;background:none;height:70px;font-size:20px;font-weight:800;color:var(--muted)}
+.nav button.on{color:var(--ink);box-shadow:inset 0 5px 0 var(--ink)}
+
+.mask{position:fixed;inset:0;background:rgba(20,30,26,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{width:100%;max-width:540px;max-height:92vh;overflow:auto;background:var(--card);border-radius:24px 24px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom))}
+.sheet .q{font-size:18px;color:var(--muted)}
+.sheet .big{font-size:32px;font-weight:900;line-height:1.25;margin:6px 0 2px;display:flex;gap:12px;align-items:center}
+.sheet .m{font-size:19px;margin-bottom:16px}
+.step{font-size:19px;font-weight:900;margin:14px 0 8px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{min-height:64px;border:3px solid var(--line);border-radius:16px;background:#fff;font-size:24px;font-weight:900}
+.opt.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.halfbtn{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;border:3px solid var(--line);border-radius:16px;background:#fff;padding:8px 14px;font-size:21px;font-weight:800;text-align:left;margin:4px 0 16px}
+.halfbtn .box{width:32px;height:32px;border:3px solid var(--muted);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff}
+.halfbtn.on{border-color:var(--ink)}
+.halfbtn.on .box{background:var(--ink);border-color:var(--ink)}
+.halfbtn.spicy.on{border-color:var(--danger)}
+.halfbtn.spicy.on .box{background:var(--danger);border-color:var(--danger)}
+.spicytag{display:inline-block;background:var(--danger);color:#fff;font-size:14px;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:3px}
+
+.loading{position:fixed;inset:0;background:rgba(238,243,240,.75);display:flex;align-items:center;justify-content:center;z-index:30;font-size:22px;font-weight:800}
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:14px 26px;border-radius:999px;font-weight:800;font-size:20px;z-index:40}
+/* 跟上次一樣 */
+.again{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:3px solid var(--go);background:#E6F4EC;border-radius:18px;padding:14px;margin-bottom:12px}
+.again .tx{flex:1;line-height:1.3}
+.again .tx small{display:block;font-size:15px;color:var(--muted);font-weight:700}
+.again .tx b{display:block;font-size:22px;font-weight:900}
+.again .tx span{font-size:15px;color:var(--ink)}
+.again .go1{flex:0 0 auto;background:var(--go);color:#fff;border-radius:14px;padding:12px 14px;font-size:19px;font-weight:900;white-space:nowrap}
+.or{text-align:center;color:var(--muted);font-size:15px;margin:2px 0 12px}
+/* 人氣 */
+.hot{display:inline-block;font-size:14px;font-weight:800;color:#9A4A00;background:#FFEBD2;border-radius:999px;padding:0 8px;margin-top:3px}
+.hot.top{background:#FFD98A;color:#5A3A00}
+/* 倒數 */
+.cd{display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:10px 14px;margin-bottom:14px;font-size:18px;font-weight:800}
+.cd b{font-size:22px}
+.cd.warn{background:#FFF0DC;border-color:#E58A1F;color:#8A4B00}
+/* 密碼鍵盤 */
+.dots{display:flex;justify-content:center;gap:18px;margin:16px 0 8px}
+.dots i{width:22px;height:22px;border-radius:50%;border:3px solid var(--ink)}
+.dots i.on{background:var(--ink)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.pad button{height:68px;border:2px solid var(--line);border-radius:16px;background:#fff;font-size:30px;font-weight:900}
+.pad button:active{background:#E3ECE7}
+.pad .fn{font-size:18px;font-weight:800;color:var(--muted)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.lock{display:block;margin:16px auto 0;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:12px 18px;font-size:18px;font-weight:800}
+.soldbar{background:#FDE7E4;border:3px solid var(--danger);border-radius:18px;padding:14px 16px;margin-bottom:14px;font-size:19px;font-weight:800;color:#7A1A12;line-height:1.45}
+.soldbar s{color:#A8746E}
+.stepper{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 8px}
+.stepper button{width:64px;height:64px;border-radius:50%;border:3px solid var(--ink);background:#fff;font-size:34px;font-weight:900;line-height:1}
+.stepper b{font-size:40px;min-width:90px;text-align:center}
+.qq{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.qq button{flex:1;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 0;font-size:17px;font-weight:800;white-space:nowrap}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div style="background:#A8231B;color:#fff;text-align:center;font-weight:800;padding:6px">測試版（資料不是正式的）</div>
+<div class="app" id="app"></div>
+<nav class="nav" id="nav" hidden>
+  <button id="navOrder" onclick="go('order')">訂便當</button>
+  <button id="navAcc" onclick="go('account')">我的帳戶</button>
+</nav>
+<div class="loading" id="loading" hidden>飯菜準備中…</div>
+<div class="toast" id="toast" hidden></div>
+<div id="modal"></div>
+
+<script>
+const START_VIEW = (new URLSearchParams(location.search).get('view') || '').replace(/[^a-z]/g, '');
+const NEW_URL = '';
+const KEY = 'yl_lunch_login_test';
+const API = 'https://script.google.com/macros/s/AKfycbxw8vNiImBw4YtFdd8zTNxAnoiAXQjUzkuVha3sXkcrfpliSAJncAscA3acJoSC5rub/exec';  // 詠不餓 Google 網頁應用程式的 /exec 網址
+let creds = null, data = null, acc = null, view = START_VIEW === 'account' ? 'account' : 'order';
+let selDate = null, selCat = null, adding = false, justOrdered = null, pick = null;
+let people = [], peopleQ = '';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString();
+const riceLike = name => /飯|便當|餐盒/.test(name);
+const spicyOk = (m, it) => m.spicy !== false && !/(茶|漿|汁)$/.test(it.item);
+const optLabel = (it, k) => it.opts[k] + (it.adds && it.adds[k] ? ` +$${it.adds[k]}` : '');
+const priceTxt = it => money(it.price) + (it.unit ? '/' + it.unit : '');
+
+function call(fn, ...args) {
+  if (!/^https:\/\/script\.google\.com\//.test(API)) return Promise.reject(new Error('系統網址還沒設定，請通知資訊部'));
+  return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args }) })
+    .then(r => { if (!r.ok) throw new Error('net'); return r.json(); })
+    .catch(() => { throw new Error('網路連線不穩，請稍後再試一次'); })
+    .then(j => { if (!j.ok) throw new Error(j.error || '發生錯誤，請稍後再試'); return j.data; });
+}
+/* 這個瀏覽器能不能記住登入？（LINE 內建瀏覽器、無痕模式通常不行） */
+const IN_LINE = / Line\//i.test(navigator.userAgent);
+const CAN_REMEMBER = (() => { try { localStorage.setItem('yl_t', '1'); const ok = localStorage.getItem('yl_t') === '1'; localStorage.removeItem('yl_t'); return ok; } catch (e) { return false; } })();
+function rememberTip() {
+  if (CAN_REMEMBER) return '';
+  return `<div class="soldbar" style="background:#FFF0DC;border-color:#E58A1F;color:#6B3E00;font-size:17px">
+    📌 <b>這個瀏覽器（可能是無痕模式）無法記住登入</b>，所以每次都要重新登入。<br>
+    請按右上角「⋯」或「︙」→ 選「<b>用瀏覽器開啟</b>」（Chrome 或 Safari），之後就會記住你。</div>`;
+}
+function loadCreds() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+function saveCreds(c) { try { c ? localStorage.setItem(KEY, JSON.stringify(c)) : localStorage.removeItem(KEY); } catch (e) {} }
+function busy(on) { $('loading').hidden = !on; }
+function toast(t) { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, 2200); }
+function sheet(html) { $('modal').innerHTML = `<div class="mask" onclick="if(event.target===this)closeSheet()"><div class="sheet">${html}</div></div>`; }
+function closeSheet() { $('modal').innerHTML = ''; }
+function codeBadge(code, cat) { return `<span class="code ${cat === '素' ? 'veg' : ''} ${code ? '' : 'none'}">${esc(code || '・')}</span>`; }
+
+/* ---------- 登入：點自己的名字 ---------- */
+async function showLogin(msg) {
+  $('nav').hidden = true;
+  if (!people.length) {
+    busy(true);
+    try { people = await call('empList'); } catch (e) { msg = e.message; }
+    busy(false);
+  }
+  renderLogin(msg);
+}
+function renderLogin(msg) {
+  $('app').innerHTML = `<div class="login">
+    <h1>詠不餓 🍱</h1>
+    <p style="font-weight:800;color:var(--ink);margin-bottom:4px">點一下，詠遠吃得飽</p>
+    <p>請點你的名字，再輸入密碼卡上的 4 位數密碼。<br>登入一次，這支手機就會記住你。</p>
+    ${people.length > 12 ? `<input class="search" id="q" placeholder="也可以打名字找（注音、倉頡都可以）" value="${esc(peopleQ)}" autocomplete="off">` : ''}
+    ${rememberTip()}
+    <div class="err">${esc(msg || '')}</div>
+    <div class="people" id="plist"></div>
+    <p style="margin-top:18px;font-size:16px">名單裡沒有你？請找總務。</p></div>`;
+  renderPeople();
+  const q = $('q');
+  if (q) {   // 中文輸入法選字中（注音、倉頡）不要篩選，選完字才篩，且只更新名單、不重畫輸入框
+    let composing = false;
+    q.addEventListener('compositionstart', () => { composing = true; });
+    q.addEventListener('compositionend', () => { composing = false; peopleQ = q.value; renderPeople(); });
+    q.addEventListener('input', e => { if (composing || e.isComposing) return; peopleQ = q.value; renderPeople(); });
+  }
+}
+function renderPeople() {
+  const q = peopleQ.trim().toLowerCase();
+  const list = people.filter(p => !q || (p.name + p.dept).toLowerCase().includes(q));
+  $('plist').innerHTML = list.map(p => `<button class="person" onclick="pickPerson('${esc(p.id)}')">${esc(p.name)}</button>`).join('')
+    || '<p style="grid-column:1/-1">找不到這個名字，請找總務幫你加入。</p>';
+}
+function pickPerson(id) {
+  const p = people.find(x => x.id === id);
+  if (!p.hasPin) {
+    sheet(`<div class="big">${esc(p.name)}，你好</div>
+      <div class="m">你還沒有密碼。<br>請找總務拿你的<b>「詠不餓 密碼卡」</b>，上面有 4 位數密碼。</div>
+      <button class="btn ghost" onclick="closeSheet()">知道了</button>`);
+    return;
+  }
+  pinPad(`${p.name}，請輸入密碼`, '密碼卡上的 4 位數字', pin => doLogin(id, pin), '不是我，重選');
+}
+async function doLogin(id, pin) {
+  busy(true);
+  try {
+    const r = await call('empLogin', id, pin, navigator.userAgent.replace(/\s+/g, ' ').slice(0, 60));
+    data = r.home; clockOffset = data.serverNow - Date.now();
+    creds = { id, token: r.token }; saveCreds(creds); closeSheet();
+    view === 'account' ? await openAccount() : render();
+    toast(CAN_REMEMBER ? '登入成功，這支手機會記住你' : '登入成功');
+  } catch (e) { padError(e.message); }
+  busy(false);
+}
+
+/* ---------- 大字密碼鍵盤（不用叫出手機鍵盤） ---------- */
+let padVal = '', padDone = null;
+function pinPad(title, sub, done, cancelText) {
+  padVal = ''; padDone = done;
+  sheet(`<div class="big" style="font-size:26px">${esc(title)}</div><div class="q">${esc(sub)}</div>
+    <div class="dots" id="dots">${'<i></i>'.repeat(4)}</div>
+    <div class="err" id="padErr" style="text-align:center"></div>
+    <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="padKey('${n}')">${n}</button>`).join('')}
+      <button class="fn" onclick="padKey('c')">清除</button><button onclick="padKey('0')">0</button><button class="fn" onclick="padKey('b')">⌫ 退回</button></div>
+    <button class="btn ghost" style="margin-top:12px" onclick="closeSheet()">${esc(cancelText || '取消')}</button>`);
+}
+function padKey(k) {
+  if (k === 'c') padVal = ''; else if (k === 'b') padVal = padVal.slice(0, -1); else if (padVal.length < 4) padVal += k;
+  const dots = $('dots'); if (!dots) return;
+  [...dots.children].forEach((d, i) => d.className = i < padVal.length ? 'on' : '');
+  if ($('padErr')) $('padErr').textContent = '';
+  if (padVal.length === 4) { const v = padVal; setTimeout(() => padDone && padDone(v), 120); }
+}
+function padError(msg) {
+  const dots = $('dots');
+  if (!dots) { showLogin(msg); return; }
+  padVal = ''; [...dots.children].forEach(d => d.className = '');
+  $('padErr').textContent = msg;
+  dots.classList.remove('shake'); void dots.offsetWidth; dots.classList.add('shake');
+}
+
+function logout() {
+  if (!confirm('要登出嗎？下次要重新點名字、輸入密碼。')) return;
+  if (creds) call('empLogout', creds.id, creds.token).catch(() => {});
+  saveCreds(null); creds = null; data = null; acc = null; showLogin();
+}
+
+/* ---------- 讀資料 ---------- */
+async function refresh() {
+  busy(true);
+  try { data = await call('empHome', creds.id, creds.token); clockOffset = data.serverNow - Date.now(); render(); } catch (e) { failAuth(e); }
+  busy(false);
+}
+function failAuth(e) {
+  if (/登入已過期/.test(e.message)) { saveCreds(null); creds = null; closeSheet(); showLogin('請重新登入'); }
+  else toast(e.message);
+}
+function go(v) { view = v; adding = false; v === 'account' ? openAccount() : render(); }
+
+/* ---------- 訂餐畫面 ---------- */
+function topBar(title) {
+  return `<div class="top"><div><div class="hi">${esc(data.emp.name)} 你好</div><h1>${title}</h1></div>
+    <button class="out" onclick="logout()">登出</button></div>`;
+}
+function render() {
+  if (view === 'account') return renderAccount();
+  $('nav').hidden = false; $('navOrder').className = 'on'; $('navAcc').className = '';
+  const days = data.days;
+  if (!days.length) {
+    $('app').innerHTML = topBar('詠不餓 🍱') + `<div class="wrap"><div class="note"><h2>還沒有菜單</h2>總務放好菜單後，這裡就會出現。<br><br>
+      <button class="btn" onclick="refresh()">重新整理</button></div></div>`;
+    return;
+  }
+  if (!days.find(d => d.date === selDate)) selDate = days[0].date;  // 一律先看今天（或最近一天），避免以為沒訂到
+  const day = days.find(d => d.date === selDate);
+  const cats = ['葷', '素'].filter(c => day.menu[c] && day.menu[c].items.length);
+  if (!cats.includes(selCat)) selCat = cats[0];
+
+  const strip = days.length > 1 ? `<div class="dates">${days.map(d => `
+    <button class="chip ${d.date === selDate ? 'on' : ''}" onclick="pickDate('${d.date}')">
+      <span class="d">${d.isToday ? '今天' : esc(d.label.split('（')[0])}</span>
+      <span class="s">${d.reselect ? '<span style="color:var(--danger);font-weight:800">要換餐</span>' : d.lines.length ? '<span class="done">✓ 已訂</span>' : (d.open ? '週' + esc(d.label.slice(-2, -1)) : '已截止')}</span>
+    </button>`).join('')}</div>` : '';
+  const dayName = day.isToday ? '今天' : day.label;
+  const canEdit = day.open || day.reselect;
+  const cd = (data.countdown && day.isToday && day.open) || day.reselect ? cdText(day) : null;
+  const soldNames = day.soldLines.map(l => esc(l.item) + (l.opt ? '（' + esc(l.opt) + '）' : '')).join('、');
+  const soldHtml = day.reselect
+    ? `<div class="soldbar">😢 店家說你點的 <s>${soldNames}</s> 賣完了<br>請在 <b>${esc(day.reselectUntil)}</b> 前重新選一份</div>`
+    : (day.soldLines.length ? `<div class="soldbar">你點的 <s>${soldNames}</s> 賣完了，換餐時間已過，請直接找總務幫忙。</div>` : '');
+  const cdHtml = cd ? `<div class="cd ${cd.warn ? 'warn' : ''}" id="cd">${cd.html}</div>` : '';
+  let body;
+
+  if (day.lines.length && !adding) {
+    body = cdHtml + soldHtml + `<div class="ticket">
+        <div class="stamp ${day.open ? '' : 'closed'} ${justOrdered === day.date ? 'pop' : ''}">${day.open ? '已訂好' : '已截止'}</div>
+        <div class="when">${esc(day.label)} 午餐</div>
+        ${day.lines.map(l => `<div class="tl">${codeBadge(l.code, l.cat)}
+          <div class="nm">${esc(l.item)}${l.half ? '<span class="half">半飯</span>' : ''}${l.spicy ? '<span class="spicytag">加辣</span>' : ''}<small>${l.opt ? esc(l.opt) + '　' : ''}${esc(l.vendor)}</small></div>
+          <div class="pr num">${money(l.price)}</div>
+          ${day.open && day.lines.length > 1 ? `<button class="x" aria-label="刪掉這樣" onclick="askRemove('${esc(l.lid)}')">✕</button>` : ''}</div>`).join('')}
+        ${day.lines.length > 1 ? `<div class="sum"><span>合計</span><span class="num">${money(day.total)}</span></div>` : ''}
+        <div class="foot">${day.open ? `${esc(dayName)} ${esc(data.cutoff)} 前都可以改` : '已經截止了，有問題請找總務'}</div>
+      </div>
+      ${day.open ? `<button class="btn" onclick="adding=true;render()">＋ 再加一樣</button>
+        <button class="link" onclick="askCancelDay()">不要了，全部取消</button>`
+        : day.reselect ? `<button class="btn go" onclick="adding=true;render()">重新選一份</button>` : ''}`;
+  } else if (!canEdit) {
+    body = soldHtml + `<div class="note"><h2>${esc(dayName)}已經截止</h2>${esc(data.cutoff)} 以後就不能自己訂或改了。<br>臨時要加訂或取消，請打給總務。</div>`;
+  } else if (!cats.length) {
+    body = `<div class="note"><h2>菜單還沒放好</h2>請晚一點再看。</div>`;
+  } else {
+    const m = day.menu[selCat];
+    const again = !adding && day.open ? day.again.filter(a => day.menu[a.cat]) : [];
+    const againHtml = again.map((a, k) => `<button class="again" onclick="orderAgain(${k})">${codeBadge(a.showCode, a.cat)}
+        <span class="tx"><small>上次在${esc(a.vendor)}點的</small><b>${esc(a.item)}</b>
+        <span>${a.optLabel ? esc(a.optLabel) + '　' : ''}${a.half ? '半飯　' : ''}${a.spicy ? '加辣　' : ''}${money(a.price)}</span></span>
+        <span class="go1">再來一份</span></button>`).join('') + (again.length ? '<div class="or">或是從下面挑別的</div>' : '');
+    body = cdHtml + soldHtml + againHtml + `<div class="ask">${day.reselect ? '重新選一份' : adding ? '再加一樣' : esc(dayName) + '想吃什麼？'}</div>
+      <p class="hint">${day.reselect && !day.open ? `先選葷或素，再點一道菜。<b>${esc(day.reselectUntil)}</b> 前要換好。` : adding ? '例如麵線、蘿蔔糕、紅茶。' : `先選葷或素，再點一道菜。<b>${esc(data.cutoff)}</b> 前要訂好。`}</p>
+      <div class="cats">${['葷', '素'].map(c => `
+        <button class="cat ${c === '葷' ? 'meat' : 'veg'} ${c === selCat ? 'on' : ''}" ${cats.includes(c) ? '' : 'disabled'} onclick="selCat='${c}';render()">
+          <span class="n">${c}食</span><span class="v">${day.menu[c] ? esc(day.menu[c].vendor) : '今天沒有'}</span></button>`).join('')}</div>
+      ${m.note ? `<p class="hint">${esc(m.note)}</p>` : ''}
+      <div class="items ${selCat === '素' ? 'veg' : ''}">${m.items.map((it, i) => `
+        <button class="item" onclick="openPick(${i})">${codeBadge(it.code, selCat)}
+          <span class="nm">${esc(it.item)}${it.unit ? `<small>可選幾${esc(it.unit)}</small>` : it.opts.length ? `<small>${esc(it.opts.map((o, k) => optLabel(it, k)).join('、'))}</small>` : ''}${it.hot ? `<span class="hot ${it.top ? 'top' : ''}">${it.top ? '👑' : '🔥'} ${it.hot} 人點</span>` : ''}</span>
+          <span class="pr num">${priceTxt(it)}</span></button>`).join('')}</div>
+      ${adding && day.lines.length ? `<button class="btn ghost" style="margin-top:14px" onclick="adding=false;render()">${day.reselect ? '先不換，回到我的訂單' : '不用加了，回到我的訂單'}</button>` : ''}`;
+  }
+  $('app').innerHTML = topBar('詠不餓 🍱') + strip + `<div class="wrap">${rememberTip()}${body}</div>`;
+  justOrdered = null;
+  clearInterval(cdTimer); if (cd) cdTimer = setInterval(tick, 20000);
+}
+/* 截止倒數：用伺服器時間校正，避免手機時間不準 */
+let clockOffset = 0, cdTimer = null;
+function deadlineOf(day) { return new Date(day.date + 'T' + (day.open ? data.cutoff : day.reselectUntil) + ':00+08:00').getTime(); }
+function cdText(day) {
+  const left = deadlineOf(day) - (Date.now() + clockOffset);
+  if (left <= 0) return null;
+  const m = Math.ceil(left / 60000), h = Math.floor(m / 60), mm = m % 60;
+  return { warn: m <= 10, html: `⏰ 還有 <b class="num">${h ? h + ' 小時 ' : ''}${mm} 分鐘</b> ${day.open ? '截止' : '可以換餐'}` };
+}
+function tick() {
+  const el = $('cd'); if (!el || !data) return;
+  const day = data.days.find(d => d.date === selDate);
+  const c = day && cdText(day);
+  if (!c) { refresh(); return; }
+  el.className = 'cd' + (c.warn ? ' warn' : ''); el.innerHTML = c.html;
+}
+function pickDate(d) { selDate = d; selCat = null; adding = false; render(); }
+
+/* 點菜：口味（有才問）→ 半飯（飯類才有）→ 確定 */
+function openPick(i) {
+  const day = data.days.find(d => d.date === selDate), m = day.menu[selCat], it = m.items[i];
+  pick = { i, opt: it.opts.length ? '' : null, half: false, qty: 10 };
+  drawPick();
+}
+function drawPick() {
+  const day = data.days.find(d => d.date === selDate), m = day.menu[selCat], it = m.items[pick.i];
+  const needOpt = !it.unit && it.opts.length > 0, ready = !needOpt || pick.opt;
+  const k = needOpt ? it.opts.indexOf(pick.opt) : -1;
+  const total = it.unit ? Math.round(it.price * pick.qty) : it.price + (k >= 0 ? it.adds[k] || 0 : 0);
+  sheet(`<div class="q">${esc(day.isToday ? '今天' : day.label)}午餐</div>
+    <div class="big">${codeBadge(it.code, selCat)}<span>${esc(it.item)}</span></div>
+    <div class="m">${esc(m.vendor)}　<b class="num">${it.unit ? priceTxt(it) + '　共 ' + money(total) : money(total)}</b></div>
+    ${it.unit ? `<div class="step">要幾${esc(it.unit)}？</div>
+      <div class="stepper"><button onclick="pick.qty=Math.max(1,pick.qty-1);drawPick()">−</button><b class="num">${pick.qty}</b>
+        <button onclick="pick.qty=Math.min(100,pick.qty+1);drawPick()">＋</button></div>
+      <div class="qq">${[5, 8, 10, 15, 20].map(n => `<button onclick="pick.qty=${n};drawPick()">${n}${esc(it.unit)}</button>`).join('')}</div>` : ''}
+    ${needOpt ? `<div class="step">請選擇</div><div class="opts">${it.opts.map((o, j) =>
+      `<button class="opt ${pick.opt === o ? 'on' : ''}" style="font-size:${o.length > 3 ? 20 : 24}px" onclick="pick.opt=data.days.find(d=>d.date===selDate).menu[selCat].items[pick.i].opts[${j}];drawPick()">${esc(optLabel(it, j))}</button>`).join('')}</div>` : ''}
+    ${riceLike(it.item) && !it.unit ? `<button class="halfbtn ${pick.half ? 'on' : ''}" style="margin-top:14px" onclick="pick.half=!pick.half;drawPick()">
+      <span class="box">${pick.half ? '✓' : ''}</span>飯少一點（半飯）</button>` : '<div style="height:12px"></div>'}
+    ${spicyOk(m, it) ? `<button class="halfbtn spicy ${pick.spicy ? 'on' : ''}" style="margin-top:${riceLike(it.item) && !it.unit ? 0 : 2}px" onclick="pick.spicy=!pick.spicy;drawPick()">
+      <span class="box">${pick.spicy ? '✓' : ''}</span>🌶 要加辣</button>` : ''}
+    <button class="btn go" ${ready ? '' : 'disabled style="opacity:.4"'} onclick="placeOrder()">${ready ? '確定，就訂這個' : '請先選擇'}</button>
+    <button class="btn ghost" onclick="closeSheet()">不要，再看看</button>`);
+}
+async function orderAgain(k) {
+  const day = data.days.find(d => d.date === selDate), a = day.again.filter(x => day.menu[x.cat])[k];
+  busy(true);
+  try {
+    data = await call('empAdd', creds.id, creds.token, selDate, a.cat, a.code, a.item, a.opt || '', a.half, a.qty || 0, !!a.spicy);
+    justOrdered = selDate; acc = null; render(); toast('訂好了，跟上次一樣！');
+  } catch (e) { failAuth(e); }
+  busy(false);
+}
+async function placeOrder() {
+  const day = data.days.find(d => d.date === selDate), it = day.menu[selCat].items[pick.i];
+  if (!it.unit && it.opts.length && !pick.opt) return;
+  closeSheet(); busy(true);
+  try {
+    data = await call('empAdd', creds.id, creds.token, selDate, selCat, it.code, it.item, pick.opt || '', pick.half, pick.qty, !!pick.spicy);
+    adding = false; justOrdered = selDate; acc = null; render(); toast('訂好了，詠不餓！');
+  } catch (e) { failAuth(e); }
+  busy(false);
+}
+function askRemove(lid) {
+  const l = data.days.find(d => d.date === selDate).lines.find(x => x.lid === lid);
+  sheet(`<div class="q">要刪掉這一樣嗎？</div><div class="big">${codeBadge(l.code, l.cat)}<span>${esc(l.item)}</span></div><div class="m"></div>
+    <button class="btn danger" onclick="doRemove('${esc(lid)}')">刪掉</button>
+    <button class="btn ghost" onclick="closeSheet()">不要刪</button>`);
+}
+async function doRemove(lid) {
+  closeSheet(); busy(true);
+  try { data = await call('empRemove', creds.id, creds.token, lid); acc = null; render(); toast('已刪掉'); } catch (e) { failAuth(e); }
+  busy(false);
+}
+function askCancelDay() {
+  const day = data.days.find(d => d.date === selDate);
+  sheet(`<div class="q">${esc(day.label)}</div><div class="big">全部取消嗎？</div>
+    <div class="m">取消後，${esc(data.cutoff)} 前還可以重新訂。</div>
+    <button class="btn danger" onclick="doCancelDay()">對，全部取消</button>
+    <button class="btn ghost" onclick="closeSheet()">不取消</button>`);
+}
+async function doCancelDay() {
+  closeSheet(); busy(true);
+  try { data = await call('empCancelDay', creds.id, creds.token, selDate); acc = null; render(); toast('已取消'); } catch (e) { failAuth(e); }
+  busy(false);
+}
+
+/* ---------- 我的帳戶 ---------- */
+async function openAccount() {
+  view = 'account'; busy(true);
+  try {
+    if (!data) data = await call('empHome', creds.id, creds.token);
+    acc = await call('empAccount', creds.id, creds.token);
+    renderAccount();
+  } catch (e) { failAuth(e); }
+  busy(false);
+}
+function renderAccount() {
+  if (!acc) return openAccount();
+  $('nav').hidden = false; $('navOrder').className = ''; $('navAcc').className = 'on';
+  const b = acc.balance;
+  const box = b < 0
+    ? `<div class="bal owe"><div class="k">還要付給總務</div><div class="v num">${money(-b)}</div><div class="sub">付錢給總務後，這裡會更新。</div></div>`
+    : b > 0
+      ? `<div class="bal pre"><div class="k">預存還剩</div><div class="v num">${money(b)}</div><div class="sub">訂便當會從這裡扣。</div></div>`
+      : `<div class="bal"><div class="k">目前</div><div class="v">不用付錢</div><div class="sub">沒有欠款，也沒有預存。</div></div>`;
+  $('app').innerHTML = topBar('我的帳戶') + `<div class="wrap">${box}
+    <div class="stats"><div><span>這週吃了</span><b class="num">${money(acc.week)}</b></div>
+      <div><span>已訂、還沒吃</span><b class="num">${money(acc.future)}</b></div></div>
+    <div class="sec">最近明細</div>
+    <div class="hist">${acc.history.length ? acc.history.map(h => `
+      <div class="h"><div><div class="t">${esc(h.text)}${h.future ? '（預訂）' : ''}</div><div class="s">${esc(h.label)}${h.sub ? '　' + esc(h.sub) : ''}</div></div>
+      <div class="a num ${h.amount > 0 ? 'plus' : ''}">${h.amount > 0 ? '+' : ''}${money(h.amount)}</div></div>`).join('')
+      : '<div class="h"><div class="s">還沒有紀錄</div></div>'}</div>
+    <p class="hint" style="margin-top:12px">預先訂的便當，到當天才會算進「還要付」。</p>
+    <button class="lock" onclick="startChangePin()">🔒 修改我的密碼</button></div>`;
+}
+
+/* ---------- 修改密碼：舊密碼 → 新密碼 → 再輸入一次 ---------- */
+function startChangePin() {
+  pinPad('請輸入目前的密碼', '確認是你本人', oldPin =>
+    pinPad('請輸入新的 4 位數密碼', '不要用 1111、1234 這種太好猜的', newPin =>
+      pinPad('再輸入一次新密碼', '確認沒有按錯', again => {
+        if (again !== newPin) { padError('兩次不一樣，請重新設定'); setTimeout(startChangePin, 1200); return; }
+        busy(true);
+        call('empChangePin', creds.id, creds.token, oldPin, newPin)
+          .then(() => { closeSheet(); toast('密碼改好了'); })
+          .catch(e => { padError(e.message); })
+          .finally(() => busy(false));
+      })));
+}
+
+/* ---------- 搬家頁：舊網址 → 新版（已登入的手機帶一次性通行碼，免輸入密碼） ---------- */
+async function showMigrate() {
+  $('nav').hidden = true;
+  let href = NEW_URL, who = '';
+  const c = loadCreds();
+  if (c && c.id && c.token) {
+    busy(true);
+    try {
+      const code = await call('empTransferCreate', c.id, c.token);
+      href = NEW_URL + '#t=' + code;
+      const p = (await call('empList')).find(x => x.id === c.id);
+      who = p ? p.name : '';
+    } catch (e) { href = NEW_URL; }
+    busy(false);
+  }
+  $('app').innerHTML = `<div class="login">
+    <h1>詠不餓 🍱 升級了</h1>
+    <p style="font-weight:800;color:var(--ink)">新版更穩定，iPhone 關掉再開也會記住你。</p>
+    <p>${who ? esc(who) + '，按下面的按鈕就直接進入，不用再輸入密碼。' : '按下面的按鈕進入新版，登入一次之後就會記住你。'}</p>
+    <a class="btn go" href="${esc(href)}" target="_top" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:18px">進入新版詠不餓</a>
+    <p style="margin-top:22px;font-size:16px">原本的網址、QR Code 都可以繼續用，系統會帶你到新版。</p></div>`;
+}
+
+(async function init() {
+  const m = location.hash.match(/[#&]t=([0-9a-f]{32})/);
+  if (m) history.replaceState(null, '', location.pathname + location.search);
+  creds = loadCreds();
+  if (m && !creds) {
+    busy(true);
+    try {
+      const r = await call('empTransferRedeem', m[1], navigator.userAgent.replace(/\s+/g, ' ').slice(0, 60));
+      creds = { id: r.id, token: r.token }; saveCreds(creds);
+      data = r.home; clockOffset = data.serverNow - Date.now();
+      busy(false); render(); toast('已進入新版，以後不用再輸入密碼');
+      return;
+    } catch (e) { busy(false); return showLogin(e.message); }
+  }
+  if (!creds) return showLogin();
+  if (view === 'account') return openAccount();
+  refresh();
+})();
+</script>
+</body>
+</html>
